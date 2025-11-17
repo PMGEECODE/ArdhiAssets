@@ -95,7 +95,7 @@ class Settings(BaseSettings):
     CORS_EXPOSE_HEADERS: List[str] = Field(default_factory=lambda: ["Set-Cookie"])
 
     # Frontend / Domains
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "https://assets-system-sigma.vercel.app"
     DEV_DOMAIN: str = "dev.auth.local"
     DEV_FRONTEND_DOMAIN: str = "dev.frontend.local"
 

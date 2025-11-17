@@ -1,24 +1,13 @@
 export const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  import.meta.env.VITE_API_URL || "https://assets-system-sigma.vercel.app/api";
 
 export const AUTH_CONFIG = {
   BRUTE_FORCE_KEY_PREFIX: "bf_attempts",
   REMEMBER_FLAG_KEY: "auth_remember_flag",
   MAX_FAILED_ATTEMPTS: 5,
-  LOCKOUT_TTL_MS: 15 * 60 * 1000, // 15 minutes
+  LOCKOUT_TTL_MS: 15 * 60 * 1000,
   MIN_PASSWORD_LENGTH: 8,
 } as const;
-
-// export const API_URL =
-//   import.meta.env.MODE === "production"
-//     ? import.meta.env.VITE_PROD_API_URL
-//     : import.meta.env.VITE_API_URL;
-
-// if (!API_URL) {
-//   throw new Error(
-//     "API_URL is not defined. Please set VITE_API_URL (and VITE_PROD_API_URL for production) in your .env file."
-//   );
-// }
 
 export const APP_NAME =
   import.meta.env.VITE_APP_NAME || "Device Management System";
@@ -26,7 +15,7 @@ export const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.1.0";
 export const DEFAULT_PAGE_SIZE =
   Number(import.meta.env.VITE_DEFAULT_PAGE_SIZE) || 10;
 export const DATE_FORMAT = "dd MMM yyyy, HH:mm:ss";
-export const JWT_TIMEOUT = 60 * 60 * 1000; // 1 hour
+export const JWT_TIMEOUT = 60 * 60 * 1000;
 
 // =======================
 // Cookie & CSRF Config
