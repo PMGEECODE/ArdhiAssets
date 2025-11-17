@@ -1,0 +1,196 @@
+/* Dashboard css */
+input {
+  outline: none;
+  box-shadow: none;
+}
+
+button {
+  outline: none;
+  box-shadow: none;
+}
+
+.btn-header {
+  display: flex;
+  gap: 5px;
+}
+
+.pt-1.text-primary-600 {
+  padding-top: 0;
+  color: royalblue;
+}
+
+.show-hide-password.flex.items-center.space-x-2 {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  &:hover {
+    color: lightslategray;
+    outline: none;
+  }
+}
+
+.passContentsCon.max-w-md.mx-auto.mt-10.p-6.bg-white.rounded.shadow {
+  position: relative;
+}
+
+button.nav-backBtn.mb-4.flex.items-center.space-x-2.text-blue-600.hover\:text-blue-800 {
+  position: absolute;
+  top: -3rem;
+  left: -20rem;
+  background: skyblue;
+  padding: 0 10px;
+  border-radius: 20px;
+  box-shadow: 2px 2px 10px #000, inset 2px 2px 10px #fff;
+  outline: none;
+}
+
+input.bg-white.border.border-primary-200.text-primary-900.text-sm.rounded-lg.focus\:ring-accent-500.focus\:border-accent-500.block.w-full.pl-10.p-2\.5 {
+  outline: none;
+}
+
+button.inline-flex.items-center.justify-center.rounded-md.font-medium.transition-colors.focus\:outline-none.focus\:ring-2.focus\:ring-offset-2.bg-transparent.text-primary-600.hover\:bg-primary-50.focus\:ring-primary-500.text-sm.px-4.py-2.ml-2,
+button.inline-flex.items-center.justify-center.rounded-md.font-medium.transition-colors.focus\:outline-none.focus\:ring-2.focus\:ring-offset-2.bg-error-600.text-white.hover\:bg-error-700.focus\:ring-error-500.text-xs.px-2\.5.py-1\.5 {
+  outline: none;
+}
+button.inline-flex.items-center.justify-center.rounded-md.font-medium.transition-colors.focus\:outline-none.focus\:ring-2.focus\:ring-offset-2.bg-transparent.text-primary-600.hover\:bg-primary-50.focus\:ring-primary-500.text-sm.px-4.py-2.ml-2 {
+  box-shadow: 0 0 1px #ccc;
+  border: none;
+  outline: none;
+  background: rgb(247 247 247);
+  transition: 0.3s ease;
+  &:hover {
+    background-color: rgb(238, 237, 237);
+    transition: 0.3s ease;
+    color: black;
+    font-weight: 700;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .text-xl.font-semibold.text-primary-800 {
+    padding-left: 3rem;
+  }
+  button.nav-backBtn.mb-4.flex.items-center.space-x-2.text-blue-600.hover\:text-blue-800 {
+    position: absolute;
+    top: -3rem;
+    left: -7rem;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  main.mainWrapper {
+    margin: 0;
+  }
+  .usermanagement-wapper.p-6 {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .space-y-6 .bg-white.rounded-lg .p-6 {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .grid.grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-3.gap-6.p-6 {
+    font-size: 22px;
+    gap: 8px;
+  }
+
+  h3.text-sm.font-medium.text-primary-500 {
+    font-size: 18px;
+    padding-top: 7px;
+  }
+  .md-22 {
+    border-top: 0.2px solid #ccc;
+  }
+
+  h1.title {
+    margin-bottom: 0;
+    margin-top: 12px;
+  }
+}
+
+.SideScrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 100, 100, 0.5) transparent;
+}
+
+.SideScrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.SideScrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.SideScrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.5);
+  border-radius: 4px;
+}
+
+.SideScrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.sidebar_menuIcon.flex.gap-2.items-center {
+  border: 0.3px solid rebeccapurple;
+  border-radius: 7px;
+}
+
+.filterModal {
+  margin-top: 0px !important;
+}
+
+.fixed.inset-y-0.right-0.w-full.sm\:w-96.bg-white.shadow-xl.z-50.transform.transition-transform.duration-300.ease-in-out.flex.flex-col.filterModal {
+  border-top-left-radius: 14px;
+}
+
+.flex.space-x-1.print_export {
+  border-radius: 6.2px;
+  background: #dfdfdf;
+  padding: 0.05rem;
+}
+
+button {
+  outline: none !important;
+  box-shadow: none !important;
+}
+button:focus {
+  outline: none;
+  box-shadow: none;
+}
+input:focus {
+  outline: none;
+  box-shadow: none;
+}
+select:focus {
+  outline: none;
+  box-shadow: none;
+}
+textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.5);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+/* End of Dashboard css */

@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spatial Parallax Landing Page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        /* Color System */
+        --primary-100: #a7f3f3;
+        --primary-500: #2dd4bf;
+        --primary-700: #0d9488;
+
+        --neutral-950: #0a0a0a;
+        --neutral-900: #141414;
+        --neutral-400: #a1a1aa;
+        --neutral-100: #e4e4e7;
+        --neutral-50: #fafafa;
+
+        /* Spacing */
+        --space-xs: 8px;
+        --space-sm: 16px;
+        --space-md: 24px;
+        --space-lg: 32px;
+        --space-xl: 64px;
+        --space-xxl: 96px;
+
+        /* Radius */
+        --radius-md: 16px;
+        --radius-sm: 8px;
+
+        /* Typography */
+        --h1-size: 72px;
+        --h2-size: 48px;
+        --h3-size: 24px;
+        --body-size: 18px;
+        --small-size: 14px;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--neutral-950);
+        color: var(--neutral-100);
+        overflow-x: hidden;
+        line-height: 1.7;
+        font-size: var(--body-size);
+      }
+
+      /* 3D Background Container */
+      .parallax-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        perspective: 1000px;
+        overflow: hidden;
+        z-index: 0;
+      }
+
+      .parallax-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        will-change: transform;
+      }
+
+      /* Far Background Layer */
+      .layer-far {
+        transform: translateZ(-300px) scale(4);
+      }
+
+      .layer-far::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 100px,
+            rgba(45, 212, 191, 0.03) 100px,
+            rgba(45, 212, 191, 0.03) 102px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 100px,
+            rgba(45, 212, 191, 0.03) 100px,
+            rgba(45, 212, 191, 0.03) 102px
+          );
+      }
+
+      /* Mid-ground Layer */
+      .layer-mid {
+        transform: translateZ(-150px) scale(2.5);
+      }
+
+      /* Foreground Layer */
+      .layer-near {
+        transform: translateZ(-50px) scale(1.5);
+      }
+
+      /* Floating Particles */
+      .particle {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 30% 30%,
+          var(--primary-100),
+          var(--primary-500)
+        );
+        opacity: 0.6;
+        filter: blur(2px);
+      }
+
+      .layer-mid .particle {
+        width: 120px;
+        height: 120px;
+        opacity: 0.4;
+      }
+
+      .layer-near .particle {
+        width: 60px;
+        height: 60px;
+        opacity: 0.7;
+        filter: blur(1px);
+      }
+
+      .particle:nth-child(1) {
+        top: 20%;
+        left: 10%;
+      }
+      .particle:nth-child(2) {
+        top: 60%;
+        left: 80%;
+      }
+      .particle:nth-child(3) {
+        top: 40%;
+        left: 40%;
+      }
+      .particle:nth-child(4) {
+        top: 75%;
+        left: 15%;
+      }
+      .particle:nth-child(5) {
+        top: 30%;
+        left: 70%;
+      }
+
+      /* Gradient Overlay */
+      .gradient-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          circle at top center,
+          rgba(30, 30, 30, 0.4) 0%,
+          var(--neutral-950) 100%
+        );
+        z-index: 1;
+      }
+
+      /* Main Content Container */
+      .content-wrapper {
+        position: relative;
+        z-index: 10;
+      }
+
+      .container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 var(--space-lg);
+      }
+
+      /* Hero Section */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 128px var(--space-lg);
+      }
+
+      .hero h1 {
+        font-size: var(--h1-size);
+        font-weight: 700;
+        line-height: 1.1;
+        color: var(--neutral-50);
+        margin-bottom: var(--space-md);
+        background: linear-gradient(
+          135deg,
+          var(--neutral-50) 0%,
+          var(--primary-100) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero .subtitle {
+        font-size: 20px;
+        font-weight: 400;
+        color: var(--neutral-400);
+        max-width: 600px;
+        margin-bottom: 48px;
+      }
+
+      /* Primary Button */
+      .btn-primary {
+        display: inline-block;
+        height: 52px;
+        padding: 0 var(--space-md);
+        background-color: var(--primary-500);
+        color: var(--neutral-950);
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        border-radius: var(--radius-sm);
+        box-shadow: 0 0 32px 0 rgba(45, 212, 191, 0.3);
+        cursor: pointer;
+        transition: all 250ms ease-in-out;
+        text-decoration: none;
+        line-height: 52px;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--primary-700);
+        box-shadow: 0 0 48px 0 rgba(45, 212, 191, 0.5);
+        transform: scale(1.05);
+      }
+
+      .btn-primary:active {
+        transform: scale(0.98);
+      }
+
+      /* Content Sections */
+      .section {
+        padding: var(--space-xxl) 0;
+      }
+
+      .section-title {
+        font-size: var(--h2-size);
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--neutral-50);
+        margin-bottom: var(--space-xl);
+        text-align: center;
+      }
+
+      /* Card Grid */
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--space-lg);
+        margin-bottom: var(--space-xxl);
+      }
+
+      /* Tree Layout for Features Section */
+      .tree-container {
+        position: relative;
+        padding: 80px 0;
+      }
+
+      .tree-trunk {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(
+          to bottom,
+          var(--primary-500) 0%,
+          rgba(45, 212, 191, 0.3) 50%,
+          var(--primary-500) 100%
+        );
+        transform: translateX(-50%);
+        z-index: 1;
+      }
+
+      .tree-branch {
+        position: absolute;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          var(--primary-500) 20%,
+          var(--primary-500) 80%,
+          transparent 100%
+        );
+        height: 2px;
+        opacity: 0.6;
+      }
+
+      .tree-branch-left {
+        right: 50%;
+        width: 200px;
+        transform-origin: right center;
+      }
+
+      .tree-branch-right {
+        left: 50%;
+        width: 200px;
+        transform-origin: left center;
+      }
+
+      .tree-card {
+        position: relative;
+        width: 350px;
+        margin-bottom: 120px;
+        opacity: 0;
+        transform: translateX(-100px);
+        transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+
+      .tree-card.animate-in {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .tree-card.left {
+        margin-right: 60%;
+      }
+
+      .tree-card.right {
+        margin-left: 60%;
+        transform: translateX(100px);
+      }
+
+      .tree-card.right.animate-in {
+        transform: translateX(0);
+      }
+
+      .tree-card:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Branch connector circles */
+      .tree-branch-node {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: var(--primary-500);
+        border-radius: 50%;
+        border: 3px solid var(--neutral-950);
+        box-shadow: 0 0 20px rgba(45, 212, 191, 0.5);
+      }
+
+      .tree-card.left .tree-branch-node {
+        right: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .tree-card.right .tree-branch-node {
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      /* Glassmorphism Card */
+      .card {
+        background: rgba(20, 20, 20, 0.6);
+        backdrop-filter: blur(24px);
+        border: 1px solid rgba(161, 161, 170, 0.2);
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
+        transition: transform 300ms ease-out, border-color 300ms ease-out;
+      }
+
+      .card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(161, 161, 170, 0.4);
+      }
+
+      .card h3 {
+        font-size: var(--h3-size);
+        font-weight: 600;
+        line-height: 1.4;
+        color: var(--neutral-50);
+        margin-bottom: var(--space-sm);
+      }
+
+      .card p {
+        color: var(--neutral-400);
+        line-height: 1.7;
+      }
+
+      .card-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-500),
+          var(--primary-700)
+        );
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: var(--space-md);
+        color: var(--neutral-950);
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      /* Footer */
+      footer {
+        padding: var(--space-xl) 0;
+        text-align: center;
+        color: var(--neutral-400);
+        font-size: var(--small-size);
+        border-top: 1px solid rgba(161, 161, 170, 0.1);
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        :root {
+          --h1-size: 56px;
+          --h2-size: 40px;
+        }
+
+        .parallax-layer {
+          transform: scale(0.5) !important;
+        }
+      }
+
+      @media (max-width: 768px) {
+        :root {
+          --h1-size: 40px;
+          --h2-size: 32px;
+          --space-xxl: 64px;
+        }
+
+        .parallax-container {
+          display: none;
+        }
+
+        body {
+          background: radial-gradient(circle at top, #1e1e1e 0%, #0a0a0a 100%);
+        }
+
+        .hero {
+          padding: 64px var(--space-md);
+        }
+
+        .card-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .tree-container {
+          padding: 40px 0;
+        }
+
+        .tree-card {
+          width: 280px;
+          margin-bottom: 80px;
+        }
+
+        .tree-card.left,
+        .tree-card.right {
+          margin-left: 20px;
+          margin-right: 20px;
+          width: calc(100% - 40px);
+        }
+
+        .tree-branch-left,
+        .tree-branch-right {
+          width: 100px;
+        }
+
+        .tree-trunk {
+          left: 30px;
+          transform: none;
+        }
+
+        /* Hide branches on mobile for better UX */
+        .tree-branch {
+          display: none;
+        }
+
+        .tree-branch-node {
+          display: none;
+        }
+      }
+
+      /* Reduced Motion */
+      @media (prefers-reduced-motion: reduce) {
+        .parallax-layer {
+          transform: none !important;
+        }
+
+        .card:hover {
+          transform: none;
+        }
+
+        .btn-primary:hover {
+          transform: none;
+        }
+
+        .tree-card {
+          opacity: 1 !important;
+          transform: translateX(0) !important;
+        }
+
+        .tree-card.right {
+          transform: translateX(0) !important;
+        }
+
+        .tree-branch {
+          transform: scaleX(1) !important;
+          opacity: 0.8 !important;
+        }
+      }
+
+      /* Scroll Progress Indicator */
+      .scroll-indicator {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          var(--primary-500),
+          var(--primary-100)
+        );
+        z-index: 1000;
+        transition: width 100ms linear;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Scroll Progress Indicator -->
+    <div class="scroll-indicator" id="scrollProgress"></div>
+
+    <!-- 3D Parallax Background -->
+    <div class="parallax-container">
+      <div class="parallax-layer layer-far"></div>
+
+      <div class="parallax-layer layer-mid">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+      </div>
+
+      <div class="parallax-layer layer-near">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+      </div>
+
+      <div class="gradient-overlay"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+      <!-- Hero Section -->
+      <section class="hero">
+        <h1>Experience Depth<br />in Digital Space</h1>
+        <p class="subtitle">
+          Scroll to discover a new dimension of web design with immersive
+          parallax effects and spatial animations
+        </p>
+        <a href="#features" class="btn-primary">Explore Features</a>
+      </section>
+
+      <!-- Features Section -->
+      <section class="section" id="features">
+        <div class="container">
+          <h2 class="section-title">Dynamic Parallax Features</h2>
+          <div class="tree-container">
+            <div class="tree-trunk"></div>
+
+            <!-- First Branch (Left) -->
+            <div
+              class="tree-branch tree-branch-left"
+              style="top: 100px"
+              data-branch-index="0"
+            ></div>
+            <div class="tree-card left" data-card-index="0">
+              <div class="tree-branch-node"></div>
+              <div class="card">
+                <div class="card-icon">3D</div>
+                <h3>3D Spatial Design</h3>
+                <p>
+                  Multiple layers create genuine depth perception, transforming
+                  flat screens into dimensional experiences.
+                </p>
+              </div>
+            </div>
+
+            <!-- Second Branch (Right) -->
+            <div
+              class="tree-branch tree-branch-right"
+              style="top: 260px"
+              data-branch-index="1"
+            ></div>
+            <div class="tree-card right" data-card-index="1">
+              <div class="tree-branch-node"></div>
+              <div class="card">
+                <div class="card-icon">∞</div>
+                <h3>Infinite Scrolling</h3>
+                <p>
+                  Smooth, responsive animations that adapt to your scroll speed
+                  and direction in real-time.
+                </p>
+              </div>
+            </div>
+
+            <!-- Third Branch (Left) -->
+            <div
+              class="tree-branch tree-branch-left"
+              style="top: 420px"
+              data-branch-index="2"
+            ></div>
+            <div class="tree-card left" data-card-index="2">
+              <div class="tree-branch-node"></div>
+              <div class="card">
+                <div class="card-icon">⚡</div>
+                <h3>Performance First</h3>
+                <p>
+                  Optimized rendering with GPU acceleration ensures silky-smooth
+                  60fps animations.
+                </p>
+              </div>
+            </div>
+
+            <!-- Fourth Branch (Right) -->
+            <div
+              class="tree-branch tree-branch-right"
+              style="top: 580px"
+              data-branch-index="3"
+            ></div>
+            <div class="tree-card right" data-card-index="3">
+              <div class="tree-branch-node"></div>
+              <div class="card">
+                <div class="card-icon">✨</div>
+                <h3>Glassmorphism UI</h3>
+                <p>
+                  Semi-transparent cards with backdrop blur create an elegant,
+                  modern aesthetic.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Technology Section -->
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">Built with Modern Web Standards</h2>
+          <div class="card-grid">
+            <div class="card">
+              <div class="card-icon">CSS</div>
+              <h3>CSS Perspective</h3>
+              <p>
+                Utilizing CSS 3D transforms and perspective properties for
+                hardware-accelerated animations.
+              </p>
+            </div>
+            <div class="card">
+              <div class="card-icon">JS</div>
+              <h3>Vanilla JavaScript</h3>
+              <p>
+                Lightweight, dependency-free implementation using native browser
+                APIs for scroll detection.
+              </p>
+            </div>
+            <div class="card">
+              <div class="card-icon">♿</div>
+              <h3>Accessibility Ready</h3>
+              <p>
+                Respects prefers-reduced-motion settings and maintains WCAG AAA
+                contrast standards.
+              </p>
+            </div>
+            <div class="card">
+              <div class="card-icon">📱</div>
+              <h3>Responsive Design</h3>
+              <p>
+                Adaptive experience across devices, with optimized mobile
+                fallbacks for performance.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Experience Section -->
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">Immersive Experience</h2>
+          <div class="card-grid">
+            <div class="card">
+              <div class="card-icon">🎨</div>
+              <h3>Visual Depth</h3>
+              <p>
+                Layered animations create the illusion of traveling through a 3D
+                environment as you scroll.
+              </p>
+            </div>
+            <div class="card">
+              <div class="card-icon">🌊</div>
+              <h3>Fluid Motion</h3>
+              <p>
+                Natural, physics-inspired easing curves make every scroll feel
+                organic and intentional.
+              </p>
+            </div>
+            <div class="card">
+              <div class="card-icon">🎯</div>
+              <h3>Focused Content</h3>
+              <p>
+                Dynamic backgrounds enhance rather than distract, keeping your
+                message front and center.
+              </p>
+            </div>
+            <div class="card">
+              <div class="card-icon">💎</div>
+              <h3>Premium Feel</h3>
+              <p>
+                Subtle glows, gradients, and transparency elevate the perceived
+                quality of your design.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer>
+        <div class="container">
+          <p>&copy; 2025 Spatial Parallax. Crafted by MiniMax Agent.</p>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // Scroll-based parallax animation
+      let ticking = false;
+
+      function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const scrollHeight =
+          document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercent = scrolled / scrollHeight;
+
+        // Update scroll progress indicator
+        const progressBar = document.getElementById("scrollProgress");
+        progressBar.style.width = scrollPercent * 100 + "%";
+
+        // Get all parallax layers
+        const farLayer = document.querySelector(".layer-far");
+        const midLayer = document.querySelector(".layer-mid");
+        const nearLayer = document.querySelector(".layer-near");
+
+        // Only animate if not in reduced motion mode
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          // Far layer - slowest movement
+          const farY = scrolled * 0.1;
+          const farRotate = scrollPercent * 10;
+          farLayer.style.transform = `translateZ(-300px) scale(4) translateY(${farY}px) rotateZ(${farRotate}deg)`;
+
+          // Mid layer - medium speed
+          const midY = scrolled * 0.3;
+          midLayer.style.transform = `translateZ(-150px) scale(2.5) translateY(${midY}px)`;
+
+          // Animate mid layer particles
+          const midParticles = midLayer.querySelectorAll(".particle");
+          midParticles.forEach((particle, index) => {
+            const particleY = scrolled * (0.2 + index * 0.05);
+            const particleX =
+              Math.sin(scrollPercent * Math.PI * 2 + index) * 20;
+            particle.style.transform = `translate(${particleX}px, ${particleY}px)`;
+            particle.style.opacity =
+              0.4 + Math.sin(scrollPercent * Math.PI * 4 + index) * 0.2;
+          });
+
+          // Near layer - fastest movement
+          const nearY = scrolled * 0.5;
+          nearLayer.style.transform = `translateZ(-50px) scale(1.5) translateY(${nearY}px)`;
+
+          // Animate near layer particles
+          const nearParticles = nearLayer.querySelectorAll(".particle");
+          nearParticles.forEach((particle, index) => {
+            const particleY = scrolled * (0.4 + index * 0.08);
+            const particleX =
+              Math.sin(scrollPercent * Math.PI * 3 + index) * 40;
+            particle.style.transform = `translate(${particleX}px, ${particleY}px)`;
+            particle.style.opacity =
+              0.7 + Math.sin(scrollPercent * Math.PI * 6 + index) * 0.2;
+          });
+        }
+
+        ticking = false;
+      }
+
+      function requestTick() {
+        if (!ticking) {
+          requestAnimationFrame(handleScroll);
+          ticking = true;
+        }
+      }
+
+      // Listen for scroll events
+      window.addEventListener("scroll", requestTick, { passive: true });
+
+      // Initialize tree elements and set up observers
+      document.addEventListener("DOMContentLoaded", () => {
+        initializeTreeElements();
+        // Initial updates
+        updateParallax();
+        updateCardAnimations();
+      });
+
+      // Tree Cards Animation System
+      const treeObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const card = entry.target;
+            const cardIndex = card.getAttribute("data-card-index");
+            const container = card.parentElement;
+
+            // Find the corresponding branch using data attribute
+            const correspondingBranch = container.querySelector(
+              `[data-branch-index="${cardIndex}"]`
+            );
+
+            if (entry.isIntersecting) {
+              // Card enters viewport - animate in
+              card.classList.add("animate-in");
+
+              // Animate the corresponding branch with delay
+              if (correspondingBranch) {
+                setTimeout(() => {
+                  correspondingBranch.style.transform = "scaleX(1)";
+                  correspondingBranch.style.opacity = "0.8";
+                }, 150);
+              }
+            } else {
+              // Card exits viewport - animate out
+              card.classList.remove("animate-in");
+
+              // Hide the corresponding branch
+              if (correspondingBranch) {
+                correspondingBranch.style.transform = "scaleX(0)";
+                correspondingBranch.style.opacity = "0.6";
+              }
+            }
+          });
+        },
+        {
+          threshold: 0.3,
+          rootMargin: "0px 0px -20px 0px",
+        }
+      );
+
+      // Initialize tree cards and branches
+      function initializeTreeElements() {
+        const treeCards = document.querySelectorAll(".tree-card");
+        treeCards.forEach((card, index) => {
+          treeObserver.observe(card);
+        });
+
+        // Initialize all branches
+        const branches = document.querySelectorAll(".tree-branch");
+        branches.forEach((branch) => {
+          branch.style.transform = "scaleX(0)";
+          branch.style.transformOrigin = branch.classList.contains(
+            "tree-branch-left"
+          )
+            ? "right center"
+            : "left center";
+          branch.style.transition =
+            "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease";
+          branch.style.opacity = "0.6";
+        });
+      }
+
+      // Enhanced scroll handler for bi-directional animations
+      let lastScrollY = window.scrollY;
+      let scrollDirection = "down";
+
+      function updateScrollDirection() {
+        const currentScrollY = window.scrollY;
+        scrollDirection = currentScrollY > lastScrollY ? "down" : "up";
+        lastScrollY = currentScrollY;
+      }
+
+      // Check card visibility on scroll and update animations
+      function updateCardAnimations() {
+        const treeCards = document.querySelectorAll(".tree-card");
+        const treeContainer = document.querySelector(".tree-container");
+
+        if (treeContainer) {
+          const viewportHeight = window.innerHeight;
+
+          treeCards.forEach((card) => {
+            const cardRect = card.getBoundingClientRect();
+            const cardIndex = card.getAttribute("data-card-index");
+
+            // Define optimal viewing area: between 20% and 80% of viewport
+            const isInViewport =
+              cardRect.top < viewportHeight * 0.8 &&
+              cardRect.bottom > viewportHeight * 0.2;
+
+            if (isInViewport) {
+              // Card is in optimal viewing area - show with animation
+              if (!card.classList.contains("animate-in")) {
+                card.classList.add("animate-in");
+              }
+
+              // Animate corresponding branch
+              const correspondingBranch = treeContainer.querySelector(
+                `[data-branch-index="${cardIndex}"]`
+              );
+              if (correspondingBranch) {
+                correspondingBranch.style.transform = "scaleX(1)";
+                correspondingBranch.style.opacity = "0.8";
+              }
+            } else {
+              // Card is not in optimal viewing area - hide with animation
+              if (card.classList.contains("animate-in")) {
+                card.classList.remove("animate-in");
+              }
+
+              // Hide corresponding branch
+              const correspondingBranch = treeContainer.querySelector(
+                `[data-branch-index="${cardIndex}"]`
+              );
+              if (correspondingBranch) {
+                correspondingBranch.style.transform = "scaleX(0)";
+                correspondingBranch.style.opacity = "0.6";
+              }
+            }
+          });
+        }
+      }
+
+      // Combined scroll handler
+      function handleScroll() {
+        updateParallax();
+        updateScrollDirection();
+        updateCardAnimations();
+      }
+
+      // Initial update (will be called again after DOM load)
+      // updateParallax();
+
+      // Smooth scroll for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

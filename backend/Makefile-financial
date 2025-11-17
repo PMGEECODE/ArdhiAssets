@@ -1,0 +1,51 @@
+# Financial Calculator Makefile
+# Compilation and testing targets for financial calculation system
+
+.PHONY: compile-calculator test-calculator test-python clean help
+
+help:
+	@echo "Financial Calculator Build Targets"
+	@echo "==================================="
+	@echo "  make compile-calculator  - Compile C financial calculator"
+	@echo "  make test-calculator     - Run C calculator tests"
+	@echo "  make test-python         - Run Python financial service tests"
+	@echo "  make test-all            - Run all tests"
+	@echo "  make clean               - Clean compiled binaries"
+
+# Compile the C financial calculator
+compile-calculator:
+	@echo "Compiling financial calculator..."
+	gcc -O2 -Wall -Wextra -std=c99 \
+		services/financial_calculator.c \
+		-o services/financial_calculator \
+		-ljson-c -lm
+	chmod +x services/financial_calculator
+	@echo "✓ Compilation successful: services/financial_calculator"
+
+# Compile and run C tests
+test-calculator: compile-calculator
+	@echo "Compiling C test suite..."
+	gcc -O2 -Wall -Wextra -std=c99 \
+		services/financial_calculator.c \
+		services/financial_calculator_test.c \
+		-o services/financial_calculator_test \
+		-ljson-c -lm
+	@echo "Running C tests..."
+	./services/financial_calculator_test
+	@echo "✓ C tests completed"
+
+# Run Python tests
+test-python:
+	@echo "Running Python financial tests..."
+	python -m pytest tests/test_financial_calculator.py -v --tb=short
+	@echo "✓ Python tests completed"
+
+# Run all tests
+test-all: test-calculator test-python
+	@echo "✓ All tests completed successfully"
+
+# Clean up compiled files
+clean:
+	rm -f services/financial_calculator
+	rm -f services/financial_calculator_test
+	@echo "✓ Cleanup completed"

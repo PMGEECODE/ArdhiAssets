@@ -1,0 +1,274 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.flag {
+  height: 0.15rem !important;
+}
+
+html {
+  /* === Core Layout === */
+  --color-bg-primary: theme("colors.primary.50");
+  --color-bg-secondary: theme("colors.primary.100");
+  --color-bg-tertiary: theme("colors.primary.200");
+  --color-bg-deep: rgb(241 245 249);
+
+  --color-text-primary: theme("colors.primary.950");
+  --color-text-secondary: theme("colors.primary.900");
+  --color-text-tertiary: theme("colors.primary.700");
+
+  --color-border: theme("colors.primary.300");
+  --color-border-light: theme("colors.primary.200");
+
+  --color-input-bg: theme("colors.primary.50");
+  --color-input-border: theme("colors.primary.300");
+  --color-input-text: theme("colors.primary.950");
+
+  --color-accent: theme("colors.accent.600");
+  --color-accent-light: theme("colors.accent.100");
+
+  /* === Extended Palette === */
+  --color-overlay-navy: #22283b0f;
+  --color-overlay-navy-solid: #22283b;
+
+  --color-orange-500: #f97316;
+  --color-orange-400: #fb923c;
+  --color-orange-100: #fed7aa;
+  --color-orange-50: #fff7ed;
+
+  --color-green-500: #10b981;
+  --color-green-400: #34d399;
+  --color-green-100: #a7f3d0;
+  --color-green-50: #ecfdf5;
+
+  --color-indigo-500: #6366f1;
+  --color-indigo-400: #818cf8;
+  --color-indigo-100: #c7d2fe;
+  --color-indigo-50: #eef2ff;
+
+  --color-gray-500: #6b7280;
+  --color-gray-400: #9ca3af;
+  --color-gray-300: #d1d5db;
+  --color-gray-200: #e5e7eb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-50: #f9fafb;
+
+  @apply transition-colors duration-300 ease-in-out;
+}
+
+html.dark {
+  /* === Core Layout === */
+  --color-bg-primary: theme("colors.primary.950");
+  --color-bg-secondary: theme("colors.primary.900");
+  --color-bg-tertiary: theme("colors.primary.800");
+  --color-bg-deep: rgb(11 26 45);
+
+  --color-text-primary: theme("colors.primary.50");
+  --color-text-secondary: theme("colors.primary.200");
+  --color-text-tertiary: theme("colors.primary.400");
+
+  --color-border: theme("colors.primary.700");
+  --color-border-light: theme("colors.primary.600");
+
+  --color-input-bg: theme("colors.primary.800");
+  --color-input-border: theme("colors.primary.700");
+  --color-input-text: theme("colors.primary.50");
+
+  --color-accent: theme("colors.accent.400");
+  --color-accent-light: theme("colors.accent.950");
+
+  /* === Extended Palette (Dark Mode) === */
+  --color-overlay-navy: #22283b1a; /* Slightly more visible in dark */
+  --color-overlay-navy-solid: #22283b;
+
+  --color-orange-500: #fb923c;
+  --color-orange-400: #fdba74;
+  --color-orange-100: #fed7aa;
+  --color-orange-50: #fff7ed;
+
+  --color-green-500: #34d399;
+  --color-green-400: #6ee7b7;
+  --color-green-100: #a7f3d0;
+  --color-green-50: #ecfdf5;
+
+  --color-indigo-500: #818cf8;
+  --color-indigo-400: #a5b4fc;
+  --color-indigo-100: #c7d2fe;
+  --color-indigo-50: #eef2ff;
+
+  --color-gray-500: #9ca3af;
+  --color-gray-400: #d1d5db;
+  --color-gray-300: #e5e7eb;
+  --color-gray-200: #f3f4f6;
+  --color-gray-100: #f9fafb;
+  --color-gray-50: #ffffff;
+}
+
+@layer components {
+  /* === Light Mode Overrides === */
+  html {
+    background-color: rgb(248 250 252 / 1);
+    color: rgb(15 23 42 / 1);
+  }
+
+  html input,
+  html textarea,
+  html select {
+    @apply bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-accent-500 focus:ring-accent-500;
+  }
+
+  /* === Dark Mode Overrides === */
+  html.dark {
+    background-color: rgb(3 7 18 / 1);
+    color: rgb(245 245 245 / 1);
+  }
+
+  html.dark input,
+  html.dark textarea,
+  html.dark select {
+    background-color: rgb(12 17 35 / 1);
+    color: rgb(245 245 245 / 1);
+    border-color: rgb(27 37 64 / 1);
+  }
+
+  html.dark input:focus,
+  html.dark textarea:focus,
+  html.dark select:focus {
+    border-color: rgb(59 130 246 / 1);
+    --tw-ring-color: rgb(59 130 246 / 1);
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: rgb(51 65 85 / 1);
+  }
+
+  html.dark button {
+    transition-property: color, background-color, border-color,
+      text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
+  /* === Reusable Color Classes === */
+  .bg-overlay-navy {
+    background-color: var(--color-overlay-navy);
+  }
+  .text-navy {
+    color: var(--color-overlay-navy-solid);
+  }
+
+  .bg-orange-500 {
+    background-color: var(--color-orange-500);
+  }
+  .bg-orange-400 {
+    background-color: var(--color-orange-400);
+  }
+  .bg-orange-100 {
+    background-color: var(--color-orange-100);
+  }
+  .bg-orange-50 {
+    background-color: var(--color-orange-50);
+  }
+  .text-orange-500 {
+    color: var(--color-orange-500);
+  }
+
+  .bg-green-500 {
+    background-color: var(--color-green-500);
+  }
+  .bg-green-400 {
+    background-color: var(--color-green-400);
+  }
+  .bg-green-100 {
+    background-color: var(--color-green-100);
+  }
+  .bg-green-50 {
+    background-color: var(--color-green-50);
+  }
+  .text-green-500 {
+    color: var(--color-green-500);
+  }
+
+  .bg-indigo-500 {
+    background-color: var(--color-indigo-500);
+  }
+  .bg-indigo-400 {
+    background-color: var(--color-indigo-400);
+  }
+  .bg-indigo-100 {
+    background-color: var(--color-indigo-100);
+  }
+  .bg-indigo-50 {
+    background-color: var(--color-indigo-50);
+  }
+  .text-indigo-500 {
+    color: var(--color-indigo-500);
+  }
+
+  .bg-gray-500 {
+    background-color: var(--color-gray-500);
+  }
+  .bg-gray-400 {
+    background-color: var(--color-gray-400);
+  }
+  .bg-gray-300 {
+    background-color: var(--color-gray-300);
+  }
+  .bg-gray-200 {
+    background-color: var(--color-gray-200);
+  }
+  .bg-gray-100 {
+    background-color: var(--color-gray-100);
+  }
+  .bg-gray-50 {
+    background-color: var(--color-gray-50);
+  }
+  .text-gray-500 {
+    color: var(--color-gray-500);
+  }
+
+  /* === Dark Mode Specific Overrides === */
+  html.dark .border-primary-200 {
+    border-color: rgb(27 37 64 / 1);
+  }
+  html.dark .bg-primary-50 {
+    background-color: rgb(12 17 35 / 1);
+  }
+  html.dark .text-primary-900 {
+    color: rgb(219 234 254 / 1);
+  }
+  html.dark .text-primary-700 {
+    color: rgb(191 219 254 / 1);
+  }
+  html.dark .text-primary-600 {
+    color: rgb(147 197 253 / 1);
+  }
+  html.dark .text-primary-500 {
+    color: rgb(96 165 250 / 1);
+  }
+  html.dark .bg-white {
+    background-color: rgb(15 23 42 / 1);
+  }
+
+  html.dark .shadow-card {
+    box-shadow: 0 20px 25px -5px rgb(3 7 18 / 0.1),
+      0 8px 10px -6px rgb(3 7 18 / 0.1);
+  }
+
+  html.dark .text-success-600 {
+    color: rgb(134 239 172 / 1);
+  }
+  html.dark .text-warning-600 {
+    color: rgb(253 224 71 / 1);
+  }
+  html.dark .text-error-600 {
+    color: rgb(248 113 113 / 1);
+  }
+  html.dark .text-accent-600 {
+    color: rgb(96 165 250 / 1);
+  }
+  html.dark .bg-accent-50 {
+    background-color: rgb(15 10 41 / 1);
+  }
+}
