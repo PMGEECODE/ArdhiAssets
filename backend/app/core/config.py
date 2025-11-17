@@ -139,11 +139,13 @@ class Settings(BaseSettings):
                     "http://192.168.74.3:3000",
                     "http://192.168.74.102:3000",
                     "https://ardhi-ems.vercel.app",
+                    "https://ardhi-assets.onrender.com",
+                    "https://assets-system-sigma.vercel.app",
                     f"http://{self.DEV_DOMAIN}",
                     f"http://{self.DEV_FRONTEND_DOMAIN}",
                 ])
             elif self.ENV in ("staging", "production"):
-                origins.add("https://ardhiems.onrender.com")
+                origins.add("https://ardhi-assets.onrender.com")
         return list(origins)
 
     @cached_property
