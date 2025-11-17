@@ -25,3 +25,4 @@ psycopg==3.2.12
 psycopg2-binary==2.9.11
 aiosmtplib==5.0.0
 aiosmtplib>=1.1.6
+aiofiles==25.1.0
