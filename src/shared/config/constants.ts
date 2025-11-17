@@ -10,7 +10,7 @@ export const AUTH_CONFIG = {
 } as const;
 
 export const APP_NAME =
-  import.meta.env.VITE_APP_NAME || "Device Management System";
+  import.meta.env.VITE_APP_NAME || "Ardhi Assets Management System";
 export const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.1.0";
 export const DEFAULT_PAGE_SIZE =
   Number(import.meta.env.VITE_DEFAULT_PAGE_SIZE) || 10;
