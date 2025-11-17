@@ -1,5 +1,5 @@
 export const API_URL =
-  import.meta.env.VITE_API_URL || "https://assets-system-sigma.vercel.app/api";
+  import.meta.env.VITE_API_URL || "https://ardhi-assets.onrender.com/api";
 
 export const AUTH_CONFIG = {
   BRUTE_FORCE_KEY_PREFIX: "bf_attempts",
