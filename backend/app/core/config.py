@@ -44,8 +44,8 @@ class Settings(BaseSettings):
     JWT_SECRET_ALGORITHM: Literal["HS256"] = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(15, ge=1, le=60)
     JWT_EXPIRATION_HOURS: int = Field(2, ge=1, le=24)
-    JWT_PRIVATE_KEY_PATH: Path = Path("/app/secrets/jwt_private.pem")
-    JWT_PUBLIC_KEY_PATH: Path = Path("/app/secrets/jwt_public.pem")
+    JWT_PRIVATE_KEY_PATH: Path = Path("/etc/secrets/jwt_private.pem")
+    JWT_PUBLIC_KEY_PATH: Path = Path("/etc/secrets/jwt_public.pem")
     JWT_SECRET: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
     REFRESH_TOKEN_SIGNING_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
     REFRESH_TOKEN_EXPIRE_DAYS: int = Field(7, ge=1, le=90)
