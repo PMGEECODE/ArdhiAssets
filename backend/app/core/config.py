@@ -130,6 +130,8 @@ class Settings(BaseSettings):
         if self.CORS_ORIGINS:
             origins.update(o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip())
         origins.update(self.ALLOWED_ORIGINS)
+
+        # Default origins
         if not origins:
             if self.ENV == "development":
                 origins.update([
@@ -147,8 +149,13 @@ class Settings(BaseSettings):
                     f"http://{self.DEV_FRONTEND_DOMAIN}",
                 ])
             elif self.ENV in ("staging", "production"):
-                origins.add("https://ardhi-assets.onrender.com")
+                origins.update([
+                    "https://ardhi-assets.onrender.com",       # backend domain
+                    "https://assets-system-sigma.vercel.app", # frontend domain
+                ])
+
         return list(origins)
+
 
     @cached_property
     def jwt_private_key(self) -> Optional[str]:
