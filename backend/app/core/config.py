@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import List, Literal, Optional
-from pathlib import Path
 import logging
 from functools import cached_property
 import secrets
@@ -44,14 +43,10 @@ class Settings(BaseSettings):
     JWT_SECRET_ALGORITHM: Literal["HS256"] = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(15, ge=1, le=60)
     JWT_EXPIRATION_HOURS: int = Field(2, ge=1, le=24)
-    
-    # 🔥 NEW – Read keys directly from ENV (inline PEM)
+
+    # 🔥 Inline PEM keys from .env
     JWT_PRIVATE_KEY: Optional[SecretStr] = None
     JWT_PUBLIC_KEY: Optional[SecretStr] = None
-
-    # 🔥 Existing paths (still supported as fallback)
-    JWT_PRIVATE_KEY_PATH: Path = Path("/app/secrets/jwt_private.pem")
-    JWT_PUBLIC_KEY_PATH: Path = Path("/app/secrets/jwt_public.pem")
 
     JWT_SECRET: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
     REFRESH_TOKEN_SIGNING_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
@@ -157,48 +152,28 @@ class Settings(BaseSettings):
 
     @cached_property
     def jwt_private_key(self) -> Optional[str]:
-        return self._load_key(self.JWT_PRIVATE_KEY_PATH, "private") if self.JWT_ALGORITHM == "RS256" else None
+        return self.JWT_PRIVATE_KEY.get_secret_value() if self.JWT_PRIVATE_KEY else None
 
     @cached_property
     def jwt_public_key(self) -> Optional[str]:
-        return self._load_key(self.JWT_PUBLIC_KEY_PATH, "public") if self.JWT_ALGORITHM == "RS256" else None
-
-    def _load_key(self, path: Path, key_type: Literal["private", "public"]) -> Optional[str]:
-        if not path.is_file():
-            logger.error(f"JWT {key_type} key MISSING: {path}")
-            return None
-        try:
-            content = path.read_text(encoding="utf-8").strip()
-            if not content:
-                logger.error(f"JWT {key_type} key EMPTY: {path}")
-                return None
-            logger.info(f"JWT {key_type} key LOADED: {path}")
-            return content
-        except Exception as exc:
-            logger.error(f"JWT {key_type} key READ FAILED: {path} | {exc}")
-            return None
+        return self.JWT_PUBLIC_KEY.get_secret_value() if self.JWT_PUBLIC_KEY else None
 
     @field_validator("JWT_ALGORITHM")
     @classmethod
     def validate_jwt_setup(cls, v: str, values) -> str:
         data = values.data
         if v == "RS256":
-            priv_path = data.get("JWT_PRIVATE_KEY_PATH")
-            pub_path = data.get("JWT_PUBLIC_KEY_PATH")
-            if not (priv_path and pub_path):
-                return v
-            priv_ok = Path(priv_path).is_file() and Path(priv_path).read_text().strip()
-            pub_ok = Path(pub_path).is_file() and Path(pub_path).read_text().strip()
-            if not (priv_ok and pub_ok):
-                raise ValueError("RS256 requires valid jwt_private.pem and jwt_public.pem")
+            if not data.get("JWT_PRIVATE_KEY") or not data.get("JWT_PUBLIC_KEY"):
+                raise ValueError("RS256 requires JWT_PRIVATE_KEY and JWT_PUBLIC_KEY in environment")
         else:
             secret = data.get("JWT_SECRET")
             if not secret or len(secret.get_secret_value()) < 32:
                 raise ValueError("JWT_SECRET must be >= 32 characters for HS256")
         return v
 
+
 try:
-    settings = Settings() # type: ignore
+    settings = Settings()  # type: ignore
     logger.info(f"Settings loaded | ENV={settings.ENV} | CORS={len(settings.cors_origins_list)} origins")
 except ValidationError as exc:
     logger.critical("FATAL: Configuration validation failed")
