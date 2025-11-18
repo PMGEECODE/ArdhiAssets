@@ -145,7 +145,9 @@ class Settings(BaseSettings):
                     f"http://{self.DEV_FRONTEND_DOMAIN}",
                 ])
             elif self.ENV in ("staging", "production"):
-                origins.add("https://ardhi-assets.onrender.com")
+                origins.update([
+                    "https://ardhi-assets.onrender.com",
+                    "https://assets-system-sigma.vercel.app"])
         return list(origins)
 
     @cached_property
