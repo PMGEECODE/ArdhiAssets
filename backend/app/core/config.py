@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import List, Literal, Optional
 from pathlib import Path
-from typing import ClassVar
 import logging
 from functools import cached_property
 import secrets
@@ -45,8 +44,15 @@ class Settings(BaseSettings):
     JWT_SECRET_ALGORITHM: Literal["HS256"] = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(15, ge=1, le=60)
     JWT_EXPIRATION_HOURS: int = Field(2, ge=1, le=24)
-    JWT_PRIVATE_KEY_PATH: ClassVar[Path] = Path("/secrets/jwt_private.pem")
-    JWT_PUBLIC_KEY_PATH: ClassVar[Path] = Path("/secrets/jwt_public.pem")
+    
+    # 🔥 NEW – Read keys directly from ENV (inline PEM)
+    JWT_PRIVATE_KEY: Optional[SecretStr] = None
+    JWT_PUBLIC_KEY: Optional[SecretStr] = None
+
+    # 🔥 Existing paths (still supported as fallback)
+    JWT_PRIVATE_KEY_PATH: Path = Path("/app/secrets/jwt_private.pem")
+    JWT_PUBLIC_KEY_PATH: Path = Path("/app/secrets/jwt_public.pem")
+
     JWT_SECRET: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
     REFRESH_TOKEN_SIGNING_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
     REFRESH_TOKEN_EXPIRE_DAYS: int = Field(7, ge=1, le=90)
@@ -54,7 +60,7 @@ class Settings(BaseSettings):
     # Security
     INSTITUTE_SECRET_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
     ENCRYPTION_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(44)), min_length=44, max_length=44)
-    INSTITUTE_SALT: str = Field("k7fX9Qp2Wm3S8rB1Zt4LhE6jC0NvUyKd", min_length=16)
+    INSTITUTE_SALT: str = Field("default-institute-salt-change-in-production", min_length=16)
     CSRF_SECRET_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
     SESSION_SECRET_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
     ARGON2_TIME_COST: int = Field(3, ge=1, le=10)
@@ -122,11 +128,6 @@ class Settings(BaseSettings):
     # Session scheduler
     SESSION_TIMEOUT_CHECK_INTERVAL_MINUTES: int = Field(5, ge=1, le=60)
     SESSION_CLEANUP_INTERVAL_MINUTES: int = Field(30, ge=5, le=1440)
-
-    if not JWT_PRIVATE_KEY_PATH.exists():
-        fallback = Path(__file__).parent.parent / "secrets"
-        JWT_PRIVATE_KEY_PATH = fallback / "jwt_private.pem"
-        JWT_PUBLIC_KEY_PATH = fallback / "jwt_public.pem"
 
     @cached_property
     def cors_origins_list(self) -> List[str]:
