@@ -37,7 +37,7 @@ class Settings(BaseSettings):
         return v
 
     # Redis
-    REDIS_URL: RedisDsn = Field(RedisDsn("red-d4drfv7gi27c73btk900"))
+    REDIS_URL: RedisDsn = Field(RedisDsn("redis://red-d4drfv7gi27c73btk900:6379"))
 
     # JWT
     JWT_ALGORITHM: Literal["RS256", "HS256"] = "RS256"
