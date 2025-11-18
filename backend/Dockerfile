@@ -1,33 +1,36 @@
 # ================================
-# Development Dockerfile
+# Production Dockerfile
 # ================================
 FROM python:3.11-slim
 
-# Set working directory
+# Prevents Python from writing .pyc files and buffering stdout/stderr
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Install system dependencies
+# System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies and install
+# Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy only application code (no secrets ever!)
 COPY . .
 
-# Ensure secrets directory exists and copy secret files
-RUN mkdir -p /app/secrets
-COPY app/secrets/*.pem /app/secrets/
+# Create directory where secrets will be mounted at runtime
+RUN mkdir -p /secrets
 
-# Set proper permissions for secrets
-RUN chmod 600 /app/secrets/*.pem
-
-# Expose default FastAPI port
+# Expose port
 EXPOSE 8000
 
-# Run app with auto-reload for development
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Use non-root user (optional but recommended)
+# RUN adduser --disabled-password --gecos '' appuser
+# USER appuser
+
+# Production command (no --reload)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
