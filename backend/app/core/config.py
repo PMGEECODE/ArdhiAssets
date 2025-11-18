@@ -38,18 +38,19 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: RedisDsn = Field(RedisDsn("redis://red-d4drfv7gi27c73btk900:6379"))
 
-    # JWT
-    JWT_ALGORITHM: Literal["RS256", "HS256"] = "RS256"
-    JWT_SECRET_ALGORITHM: Literal["HS256"] = "HS256"
+    # JWT (HS256 only)
+    JWT_ALGORITHM: Literal["HS256"] = "HS256"
+    JWT_SECRET: SecretStr = Field(
+        default_factory=lambda: SecretStr(secrets.token_urlsafe(32)),
+        min_length=32
+    )
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(15, ge=1, le=60)
     JWT_EXPIRATION_HOURS: int = Field(2, ge=1, le=24)
 
-    # 🔥 Inline PEM keys from .env
-    JWT_PRIVATE_KEY: Optional[SecretStr] = None
-    JWT_PUBLIC_KEY: Optional[SecretStr] = None
-
-    JWT_SECRET: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
-    REFRESH_TOKEN_SIGNING_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
+    REFRESH_TOKEN_SIGNING_KEY: SecretStr = Field(
+        default_factory=lambda: SecretStr(secrets.token_urlsafe(32)),
+        min_length=32,
+    )
     REFRESH_TOKEN_EXPIRE_DAYS: int = Field(7, ge=1, le=90)
 
     # Security
@@ -58,11 +59,12 @@ class Settings(BaseSettings):
     INSTITUTE_SALT: str = Field("default-institute-salt-change-in-production", min_length=16)
     CSRF_SECRET_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
     SESSION_SECRET_KEY: SecretStr = Field(default_factory=lambda: SecretStr(secrets.token_urlsafe(32)), min_length=32)
+
     ARGON2_TIME_COST: int = Field(3, ge=1, le=10)
     ARGON2_MEMORY_COST: int = Field(131072, ge=1024, le=1048576)
     ARGON2_PARALLELISM: int = Field(4, ge=1, le=8)
 
-    # Login / Account policies
+    # Login policies
     MAX_FAILED_ATTEMPTS: int = Field(5, ge=1, le=20)
     MAX_LOGIN_ATTEMPTS: int = Field(3, ge=1, le=20)
     LOCKOUT_DURATION_MINUTES: int = Field(15, ge=1, le=1440)
@@ -76,7 +78,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_REQUESTS: int = 100
     RATE_LIMIT_WINDOW: int = 900
 
-    # CORS & Hosts
+    # CORS / Hosts
     CORS_ORIGINS: str = ""
     ALLOWED_ORIGINS: List[str] = Field(default_factory=list)
     ALLOWED_HOSTS: List[str] = Field(default_factory=lambda: ["*"])
@@ -96,12 +98,12 @@ class Settings(BaseSettings):
     )
     CORS_EXPOSE_HEADERS: List[str] = Field(default_factory=lambda: ["Set-Cookie"])
 
-    # Frontend / Domains
+    # Frontend
     FRONTEND_URL: str = "https://assets-system-sigma.vercel.app"
     DEV_DOMAIN: str = "dev.auth.local"
     DEV_FRONTEND_DOMAIN: str = "dev.frontend.local"
 
-    # Email / SMTP
+    # SMTP
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
@@ -112,11 +114,11 @@ class Settings(BaseSettings):
     DEFAULT_ADMIN_USERNAME: Optional[str] = "admin"
     DEFAULT_ADMIN_PASSWORD: Optional[str] = "Admin@12345"
 
-    # MFA / 2FA
+    # MFA
     MFA_ISSUER_NAME: str = "GovernmentAuthSystem"
     TWO_FACTOR_CODE_EXPIRATION_MINUTES: int = 10
 
-    # ID generation / entropy
+    # Entropy
     ID_ENTROPY_BITS: int = Field(128, ge=80, le=256)
     ISOLATED_MASTER_PASSWORD_DB_URL: Optional[str] = None
 
@@ -131,50 +133,31 @@ class Settings(BaseSettings):
             origins.update(o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip())
         origins.update(self.ALLOWED_ORIGINS)
 
-        # Default origins
         if not origins:
             if self.ENV == "development":
                 origins.update([
                     "http://localhost:3000",
                     "http://localhost:5173",
                     "http://127.0.0.1:3000",
-                    "http://10.241.18.55:3000",
-                    "http://10.241.18.55:3001",
-                    "http://192.168.74.3:3000",
-                    "http://192.168.74.102:3000",
                     "https://ardhi-ems.vercel.app",
                     "https://ardhi-assets.onrender.com",
                     "https://assets-system-sigma.vercel.app",
                     f"http://{self.DEV_DOMAIN}",
                     f"http://{self.DEV_FRONTEND_DOMAIN}",
                 ])
-            elif self.ENV in ("staging", "production"):
+            else:
                 origins.update([
-                    "https://ardhi-assets.onrender.com",       # backend domain
-                    "https://assets-system-sigma.vercel.app", # frontend domain
+                    "https://ardhi-assets.onrender.com",
+                    "https://assets-system-sigma.vercel.app",
                 ])
 
         return list(origins)
 
-    @cached_property
-    def jwt_private_key(self) -> Optional[str]:
-        return self.JWT_PRIVATE_KEY.get_secret_value() if self.JWT_PRIVATE_KEY else None
-
-    @cached_property
-    def jwt_public_key(self) -> Optional[str]:
-        return self.JWT_PUBLIC_KEY.get_secret_value() if self.JWT_PUBLIC_KEY else None
-
-    @field_validator("JWT_ALGORITHM")
+    @field_validator("JWT_SECRET")
     @classmethod
-    def validate_jwt_setup(cls, v: str, values) -> str:
-        data = values.data
-        if v == "RS256":
-            if not data.get("JWT_PRIVATE_KEY") or not data.get("JWT_PUBLIC_KEY"):
-                raise ValueError("RS256 requires JWT_PRIVATE_KEY and JWT_PUBLIC_KEY in environment")
-        else:
-            secret = data.get("JWT_SECRET")
-            if not secret or len(secret.get_secret_value()) < 32:
-                raise ValueError("JWT_SECRET must be >= 32 characters for HS256")
+    def validate_jwt_secret(cls, v: SecretStr):
+        if len(v.get_secret_value()) < 32:
+            raise ValueError("JWT_SECRET must be >= 32 characters for HS256")
         return v
 
 
@@ -184,6 +167,6 @@ try:
 except ValidationError as exc:
     logger.critical("FATAL: Configuration validation failed")
     for err in exc.errors():
-        loc = " -> ".join(str(loc) for loc in err["loc"])
+        loc = " -> ".join(str(l) for l in err["loc"])
         logger.critical(f"  [{loc}] {err['msg']} ({err.get('ctx', '')})")
     raise SystemExit(1) from exc
