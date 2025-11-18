@@ -156,7 +156,6 @@ class Settings(BaseSettings):
 
         return list(origins)
 
-
     @cached_property
     def jwt_private_key(self) -> Optional[str]:
         return self.JWT_PRIVATE_KEY.get_secret_value() if self.JWT_PRIVATE_KEY else None
