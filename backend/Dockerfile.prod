@@ -41,8 +41,11 @@ COPY --chown=appuser:appuser . .
 RUN mkdir -p /app/secrets /app/logs && \
     chown -R appuser:appuser /app
 
-# Explicitly copy secrets (so they exist in container)
+# Explicitly copy secrets (recommended to mount at runtime in prod)
 COPY --chown=appuser:appuser app/secrets /app/secrets
+
+# Secure the secret files
+RUN chmod 600 /app/secrets/*
 
 # Environment variables for Python
 ENV PATH=/home/appuser/.local/bin:$PATH \
