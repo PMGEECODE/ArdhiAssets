@@ -7,9 +7,13 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
+from fastapi.responses import StreamingResponse
+import json
+import asyncio
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.core.redis_pubsub import redis_pubsub
 from app.models.auth_models.notification import Notification
 from app.models.auth_models.user import User
 from app.schemas.notification import (
@@ -41,6 +45,35 @@ async def get_notifications(
             detail="Failed to fetch notifications"
         )
 
+@router.get("/stream")
+async def stream_notifications(
+    current_user: User = Depends(get_current_user)
+):
+    """Stream notifications for authenticated user using SSE"""
+    async def event_generator():
+        channel = f"notification:user:{current_user.id}"
+        
+        # Send initial connection message
+        yield f"data: {json.dumps({'event': 'connected'})}\n\n"
+        
+        try:
+            async for message in redis_pubsub.subscribe(channel):
+                # Format as SSE message
+                yield f"data: {message}\n\n"
+        except asyncio.CancelledError:
+            # Handle client disconnection
+            pass
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Disable Nginx buffering
+        }
+    )
+
 @router.post("/", response_model=NotificationResponse, status_code=status.HTTP_201_CREATED)
 async def create_notification(
     notification_data: NotificationCreate,
@@ -59,6 +92,17 @@ async def create_notification(
         db.add(new_notification)
         await db.commit()
         await db.refresh(new_notification)
+        
+        await redis_pubsub.publish_notification(
+            str(new_notification.user_id),
+            {
+                "id": str(new_notification.id),
+                "message": new_notification.message,
+                "link": new_notification.link,
+                "read": new_notification.read,
+                "created_at": new_notification.created_at.isoformat()
+            }
+        )
         
         return new_notification
     except Exception as e:

@@ -15,6 +15,7 @@ from app.core.database import AsyncSessionLocal
 from app.models.auth_models.user import User
 from app.models.auth_models.notification import Notification
 from app.utils.generate_custom_id import generate_uuid
+from app.core.redis_pubsub import redis_pubsub
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,18 @@ async def check_session_expirations():
                         )
                         
                         db.add(notification)
+                        
+                        await redis_pubsub.publish_notification(
+                            str(user.id),
+                            {
+                                "id": str(notification.id),
+                                "message": notification.message,
+                                "link": notification.link,
+                                "read": False,
+                                "created_at": datetime.utcnow().isoformat()
+                            }
+                        )
+                        
                         logger.info(f"Created session expiration warning for user {user.id}")
             
             await db.commit()

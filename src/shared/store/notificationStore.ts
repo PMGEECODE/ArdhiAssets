@@ -21,21 +21,21 @@ export interface Notification {
 interface NotificationState {
   notifications: Notification[];
   unread_count: number;
-  isPolling: boolean;
+  isConnected: boolean;
   fetchNotifications: () => Promise<void>;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
-  startPolling: () => void;
-  stopPolling: () => void;
+  connectSSE: () => void;
+  disconnectSSE: () => void;
 }
 
-let pollingInterval: NodeJS.Timeout | null = null;
+let eventSource: EventSource | null = null;
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
   unread_count: 0,
-  isPolling: false,
+  isConnected: false,
 
   fetchNotifications: async () => {
     try {
@@ -119,24 +119,73 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
-  startPolling: () => {
-    if (pollingInterval) return;
+  connectSSE: () => {
+    if (eventSource) return;
 
-    set({ isPolling: true });
-
+    // Initial fetch to get current state
     get().fetchNotifications();
 
-    pollingInterval = setInterval(() => {
-      get().fetchNotifications();
-    }, 30000);
+    eventSource = new EventSource(`${API_URL}/notifications/stream`, {
+      withCredentials: true,
+    });
+
+    eventSource.onopen = () => {
+      console.log("Notification SSE connected");
+      set({ isConnected: true });
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+
+        if (payload.event === "new_notification") {
+          const newNotification = payload.data;
+
+          // Process the new notification
+          const processed = {
+            ...newNotification,
+            time: formatNotificationTime(newNotification.created_at),
+            type: detectNotificationType(newNotification.message),
+            priority: detectNotificationPriority(newNotification.message),
+          };
+
+          set((state) => {
+            // Avoid duplicates
+            if (state.notifications.some((n) => n.id === processed.id)) {
+              return state;
+            }
+
+            const updatedNotifications = [processed, ...state.notifications];
+            return {
+              notifications: updatedNotifications,
+              unread_count: state.unread_count + 1,
+            };
+          });
+        }
+      } catch (error) {
+        console.error("Error parsing SSE message:", error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("SSE Error:", error);
+      eventSource?.close();
+      eventSource = null;
+      set({ isConnected: false });
+
+      // Retry connection after 5 seconds
+      setTimeout(() => {
+        get().connectSSE();
+      }, 5000);
+    };
   },
 
-  stopPolling: () => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      pollingInterval = null;
+  disconnectSSE: () => {
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
     }
-    set({ isPolling: false });
+    set({ isConnected: false });
   },
 }));
 
@@ -181,3 +230,4 @@ function detectNotificationPriority(message: string): Notification["priority"] {
     return "medium";
   return "low";
 }
+// ----------------------------------------------------------------------

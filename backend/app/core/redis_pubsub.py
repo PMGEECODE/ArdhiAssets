@@ -36,4 +36,32 @@ class RedisPubSub:
         })
         return await RedisPubSub.publish(channel, message)
 
+    @staticmethod
+    async def subscribe(channel: str):
+        """Subscribe to a Redis channel and yield messages"""
+        redis_conn = await redis_client.get_client()
+        pubsub = redis_conn.pubsub()
+        await pubsub.subscribe(channel)
+        
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    yield message["data"]
+        except Exception as e:
+            logger.error(f"Error in Redis subscription for {channel}: {e}")
+        finally:
+            await pubsub.unsubscribe(channel)
+            await pubsub.close()
+
+    @staticmethod
+    async def publish_notification(user_id: str, notification_data: dict) -> bool:
+        """Publish new notification event"""
+        channel = f"notification:user:{user_id}"
+        message = json.dumps({
+            "event": "new_notification",
+            "data": notification_data,
+            "timestamp": str(__import__("datetime").datetime.utcnow().isoformat())
+        })
+        return await RedisPubSub.publish(channel, message)
+
 redis_pubsub = RedisPubSub()
