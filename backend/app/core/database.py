@@ -48,16 +48,45 @@ connect_args = {
     "timeout": 10,
 }
 
-engine: AsyncEngine = create_async_engine(
-    DATABASE_URL,
-    echo=settings.ENV in ("development", "dev", "local"),
-    future=True,
-    pool_size=20 if settings.ENV != "production" else 0,
-    max_overflow=10 if settings.ENV != "production" else 0,
-    poolclass=None if settings.ENV != "production" else __import__("sqlalchemy.pool", fromlist=["NullPool"]).NullPool,
-    pool_pre_ping=True,
-    connect_args=connect_args if settings.ENV == "production" else {"server_settings": {"application_name": "DeviceMS_FastAPI"}},
-)
+# ----------------------------------------------------------------------
+# 2. Async Engine (Secure & Configurable)
+# ----------------------------------------------------------------------
+
+connect_args = {
+    "server_settings": {
+        "application_name": "ArdhiAssets_FastAPI",
+        "jit": "off",
+        "statement_timeout": "5000",
+        "lock_timeout": "5000",
+        "idle_in_transaction_session_timeout": "60000",
+    },
+    "timeout": 10,
+}
+
+from sqlalchemy.pool import NullPool, QueuePool
+
+# Production uses NullPool, dev uses QueuePool
+if settings.ENV in ("production", "prod"):
+    engine: AsyncEngine = create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        future=True,
+        poolclass=NullPool,  # no pooling in production
+        connect_args=connect_args,
+    )
+else:
+    # Development / local environment
+    engine: AsyncEngine = create_async_engine(
+        DATABASE_URL,
+        echo=True,
+        future=True,
+        poolclass=QueuePool,  # allows pool_size & max_overflow
+        pool_size=20,
+        max_overflow=10,
+        pool_pre_ping=True,
+        connect_args={"server_settings": {"application_name": "DeviceMS_FastAPI"}},
+    )
+
 
 # ----------------------------------------------------------------------
 # 3. Async Session Factory
@@ -187,7 +216,7 @@ async def init_db() -> None:
     """
     try:
         # Execute migration SQL files first
-        await execute_migrations()
+        # await execute_migrations()
         
         # Import all auth models to register them with Base.metadata
         from app.models.auth_models import (  # noqa: F401

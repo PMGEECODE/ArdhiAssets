@@ -162,10 +162,7 @@ def set_csrf_cookie(response: Response, csrf_token: str) -> None:
 #     return request.cookies.get("refresh_token")
 
 def get_refresh_token_from_cookie(request: Request) -> Optional[str]:
-    """Retrieve refresh token from HTTP-only cookie"""
     token = request.cookies.get("refresh_token")
-    print(f"\n===========================================\n[DEBUG] Cookies received=====================================\n\n: {request.cookies}")
-    print(f"[DEBUG] Refresh token retrieved: {'YES' if token else 'NO'}")
     return token
 
 # ----------------------------------------------------------------------
