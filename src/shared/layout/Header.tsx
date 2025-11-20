@@ -30,8 +30,8 @@ const Header: React.FC = () => {
     markAllAsRead,
     deleteNotification,
     unread_count,
-    startPolling,
-    stopPolling,
+    connectSSE,
+    disconnectSSE,
   } = useNotificationStore();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -44,9 +44,9 @@ const Header: React.FC = () => {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    startPolling();
-    return () => stopPolling();
-  }, [startPolling, stopPolling]);
+    connectSSE();
+    return () => disconnectSSE();
+  }, [connectSSE, disconnectSSE]);
 
   useEffect(() => {
     if (notifOpen) {

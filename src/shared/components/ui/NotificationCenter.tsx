@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Bell, Check, CheckCheck, Trash2, Filter, Search } from "lucide-react";
 import {
   useNotificationStore,
@@ -20,19 +20,12 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    startPolling,
-    stopPolling,
   } = useNotificationStore();
 
   const [filter, setFilter] = React.useState<
     "all" | "unread" | "device_transfer" | "approval_request"
   >("all");
   const [searchTerm, setSearchTerm] = React.useState("");
-
-  useEffect(() => {
-    startPolling();
-    return () => stopPolling();
-  }, [startPolling, stopPolling]);
 
   const filteredNotifications = notifications.filter((notification) => {
     let matchesFilter = false;
