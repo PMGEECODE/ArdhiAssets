@@ -93,20 +93,18 @@ def get_token_from_cookie(request: Request) -> Optional[str]:
 
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    """Set HTTP-only authentication cookies"""
-    secure = settings.ENV != "development"
-    # For cross-site in prod, must be None
-    samesite = "none" if secure else "lax"
-    
+    secure = True  # Always True in production (you are on HTTPS)
+    samesite = "none"  # REQUIRED for cross-site cookies
+
     response.set_cookie(
         "access_token",
         access_token,
         httponly=True,
         secure=secure,
-        samesite=samesite,
+        samesite=samesite, 
         path="/",
         max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        domain=settings.COOKIE_DOMAIN if secure else None,
+        domain=".onrender.com",
     )
     response.set_cookie(
         "refresh_token",
@@ -116,9 +114,8 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         samesite=samesite,
         path="/",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-        domain=settings.COOKIE_DOMAIN if secure else None,
+        domain=".onrender.com",
     )
-
 
 def clear_auth_cookies(response: Response) -> None:
     """Clear HTTP-only authentication cookies"""
