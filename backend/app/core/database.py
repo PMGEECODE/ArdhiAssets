@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import AsyncAdaptedQueuePool  # ← Correct pool for asyncpg
 
 from app.core.config import settings
 
@@ -35,61 +36,37 @@ if DATABASE_URL.startswith(("postgres://", "postgresql://")):
     )
 
 # ----------------------------------------------------------------------
-# 2. Async Engine (Secure & Configurable)
+# 2. Unified & Safe Connect Args
 # ----------------------------------------------------------------------
 connect_args = {
     "server_settings": {
         "application_name": "ArdhiAssets_FastAPI",
         "jit": "off",
-        "statement_timeout": "5000",
-        "lock_timeout": "5000",
+        "statement_timeout": "15000",          # increased from 5s → 15s
+        "lock_timeout": "10000",
         "idle_in_transaction_session_timeout": "60000",
     },
-    "timeout": 10,
+    "timeout": 15,  # connection timeout
 }
 
 # ----------------------------------------------------------------------
-# 2. Async Engine (Secure & Configurable)
+# 3. Async Engine - Correct configuration for both dev & prod
 # ----------------------------------------------------------------------
-
-connect_args = {
-    "server_settings": {
-        "application_name": "ArdhiAssets_FastAPI",
-        "jit": "off",
-        "statement_timeout": "5000",
-        "lock_timeout": "5000",
-        "idle_in_transaction_session_timeout": "60000",
-    },
-    "timeout": 10,
-}
-
-from sqlalchemy.pool import NullPool, QueuePool
-
-# Production uses NullPool, dev uses QueuePool
-if settings.ENV in ("production", "prod"):
-    engine: AsyncEngine = create_async_engine(
-        DATABASE_URL,
-        echo=False,
-        future=True,
-        poolclass=NullPool,  # no pooling in production
-        connect_args=connect_args,
-    )
-else:
-    # Development / local environment
-    engine: AsyncEngine = create_async_engine(
-        DATABASE_URL,
-        echo=True,
-        future=True,
-        poolclass=QueuePool,  # allows pool_size & max_overflow
-        pool_size=20,
-        max_overflow=10,
-        pool_pre_ping=True,
-        connect_args={"server_settings": {"application_name": "DeviceMS_FastAPI"}},
-    )
-
+engine: AsyncEngine = create_async_engine(
+    DATABASE_URL,
+    echo=settings.ENV != "production",   # echo only in dev/staging
+    future=True,
+    poolclass=AsyncAdaptedQueuePool,       # ← THE critical fix
+    pool_size=20,                          # good default for most deployments
+    max_overflow=40,                       # allows bursts
+    pool_timeout=30,                       # wait max 30s for a connection
+    pool_pre_ping=True,                    # validates connections before use → prevents "connection is closed"
+    pool_recycle=3600,                     # recycle connections every hour → prevents stale/idle timeouts
+    connect_args=connect_args,
+)
 
 # ----------------------------------------------------------------------
-# 3. Async Session Factory
+# 4. Async Session Factory
 # ----------------------------------------------------------------------
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
@@ -100,7 +77,7 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 # ----------------------------------------------------------------------
-# 4. Declarative Base
+# 5. Declarative Base
 # ----------------------------------------------------------------------
 class Base(DeclarativeBase):
     """Base class for all ORM models"""
@@ -108,7 +85,7 @@ class Base(DeclarativeBase):
 
 
 # ----------------------------------------------------------------------
-# 5. Dependency: Async DB Session (with commit/rollback)
+# 6. Dependency: Async DB Session (with proper commit/rollback)
 # ----------------------------------------------------------------------
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -122,10 +99,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception as exc:
             from fastapi import HTTPException
             if isinstance(exc, HTTPException) and exc.status_code in (401, 403):
-                # These are expected authentication/authorization errors, log gracefully
                 logger.debug(f"Auth error: {exc.detail}")
             else:
-                # Log other errors with full context
                 logger.error(f"Database session error: {exc}", exc_info=True)
             await session.rollback()
             raise
@@ -134,15 +109,12 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 # ----------------------------------------------------------------------
-# 6. Initialize / Create Tables
+# 7. Initialize / Create Tables
 # ----------------------------------------------------------------------
 async def execute_migrations() -> None:
     """
     Execute all SQL migration files in the migrations/ folder.
-
-    - Runs each .sql file in order.
-    - Skips and logs any failed file or statement.
-    - Continues executing remaining migrations to avoid full stop.
+    (Kept for compatibility - you can keep it commented if using Alembic)
     """
     migrations_dir = Path(__file__).parent.parent.parent / "migrations"
 
@@ -150,7 +122,6 @@ async def execute_migrations() -> None:
         logger.warning(f"⚠️  Migrations directory not found: {migrations_dir}")
         return
 
-    # Sort migrations to maintain execution order
     migration_files = sorted(migrations_dir.glob("*.sql"))
 
     if not migration_files:
@@ -159,112 +130,59 @@ async def execute_migrations() -> None:
 
     async with engine.begin() as conn:
         for migration_file in migration_files:
-            logger.info(f"⏳ Executing migration: {migration_file.name}")
-
+            logger.info(f"Executing migration: {migration_file.name}")
             try:
                 with open(migration_file, "r") as f:
                     sql_content = f.read()
-            except Exception as read_exc:
-                logger.error(f"⚠️  Failed to read migration {migration_file.name}: {read_exc}")
-                continue  # skip this file entirely
 
-            # Simple split for individual SQL statements (ignores comments)
-            statements = []
-            current_statement = []
+                # Simple statement splitting
+                statements = [s.strip() for s in sql_content.split(";") if s.strip() and not s.strip().startswith("--")]
 
-            for line in sql_content.splitlines():
-                stripped = line.strip()
-                if not stripped or stripped.startswith("--"):
-                    continue
-                current_statement.append(stripped)
-                if ";" in stripped:
-                    statement = " ".join(current_statement).rstrip(";").strip()
-                    if statement:
-                        statements.append(statement)
-                    current_statement = []
+                success_count = 0
+                for stmt in statements:
+                    try:
+                        await conn.exec_driver_sql(stmt)
+                        success_count += 1
+                    except Exception as e:
+                        logger.error(f"Error in {migration_file.name}: {e}")
+                logger.info(f"Completed {migration_file.name}: {success_count}/{len(statements)} statements")
+            except Exception as e:
+                logger.error(f"Failed to read/execute {migration_file.name}: {e}")
 
-            if current_statement:
-                # Add last partial statement if not terminated with semicolon
-                statement = " ".join(current_statement).rstrip(";").strip()
-                if statement:
-                    statements.append(statement)
+    logger.info("All migrations processed.")
 
-            # Execute statements one by one
-            success_count = 0
-            for idx, statement in enumerate(statements, 1):
-                try:
-                    await conn.exec_driver_sql(statement)
-                    success_count += 1
-                except Exception as stmt_exc:
-                    logger.error(
-                        f"❌ Error executing statement {idx} in {migration_file.name}: {stmt_exc}"
-                    )
-                    continue  # skip failed statement but keep going
-
-            logger.info(
-                f"✅ Completed migration: {migration_file.name} "
-                f"({success_count}/{len(statements)} statements executed)"
-            )
-
-    logger.info("🎉 All migrations processed (errors were skipped if encountered).")
 
 async def init_db() -> None:
     """
-    Initialize the database by running migrations and creating all tables.
-    Imports all models to register them with Base.metadata.
-    This is the single source of truth for database initialization.
+    Initialize the database - run migrations and create tables.
     """
     try:
-        # Execute migration SQL files first
-        # await execute_migrations()
-        
-        # Import all auth models to register them with Base.metadata
-        from app.models.auth_models import (  # noqa: F401
-            User,
-            audit_log,
-            Role,
-            Permission,
-            backup,
-            RolePermission,
-            RefreshToken,
-            Session,
-            FailedLoginAttempt,
-            MFASecret,
-            user_role,
-            user_session,
-            notification,
-            system_setting,
+        # await execute_migrations()  # uncomment if you use raw SQL migrations
+
+        # Import all models so they are registered with Base.metadata
+        from app.models.auth_models import (  
+            User, audit_log, Role, Permission, backup, RolePermission,
+            RefreshToken, Session, FailedLoginAttempt, MFASecret,
+            user_role, user_session, notification, system_setting,
             asset_category_permission,
         )
-        
-        # Import all asset and core models to register them with Base.metadata
-        from app.models import (  # noqa: F401
-            building,
-            approval_request,
-            furniture_equipment,
-            furniture_equipment_transfer,
-            ict_asset,
-            ict_asset_transfer,
-            land_asset,
-            office_equipment,
-            office_equipment_transfer,
-            plant_machinery,
-            plant_machinery_transfer,
-            portable_item,
-            portable_item_transfer,
-            vehicle,
+        from app.models import (
+            building, approval_request, furniture_equipment,
+            furniture_equipment_transfer, ict_asset, ict_asset_transfer,
+            land_asset, office_equipment, office_equipment_transfer,
+            plant_machinery, plant_machinery_transfer, portable_item,
+            portable_item_transfer, vehicle,
         )
 
-        # Create all tables in a single transaction
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-        logger.info("✓ Database initialized successfully. All tables created/verified.")
-        
+        logger.info("Database tables created/verified successfully.")
+
         from app.services.init_default_data import init_default_data
         async with AsyncSessionLocal() as session:
             await init_default_data(session)
-            
+
     except Exception as exc:
-        logger.error(f"✗ Error initializing database: {exc}", exc_info=True)
+        logger.error(f"Error initializing database: {exc}", exc_info=True)
         raise
