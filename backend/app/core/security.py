@@ -66,9 +66,36 @@ def get_token_from_cookie(request: Request) -> Optional[str]:
     """Retrieve access token from cookie"""
     return request.cookies.get("access_token")
 
+# def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+#     """Set HTTP-only authentication cookies"""
+#     secure = settings.ENV != "development"
+#     # For cross-site in prod, must be None
+#     samesite = "none" if secure else "lax"
+    
+#     response.set_cookie(
+#         "access_token",
+#         access_token,
+#         httponly=True,
+#         secure=secure,
+#         samesite=samesite,
+#         path="/",
+#         max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
+#     )
+#     response.set_cookie(
+#         "refresh_token",
+#         refresh_token,
+#         httponly=True,
+#         secure=secure,
+#         samesite=samesite,
+#         path="/",
+#         max_age=7 * 24 * 60 * 60
+#     )
+
+
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
     """Set HTTP-only authentication cookies"""
     secure = settings.ENV != "development"
+    # For cross-site in prod, must be None
     samesite = "none" if secure else "lax"
     
     response.set_cookie(
@@ -78,7 +105,8 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         secure=secure,
         samesite=samesite,
         path="/",
-        max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        domain=settings.COOKIE_DOMAIN if secure else None,
     )
     response.set_cookie(
         "refresh_token",
@@ -87,7 +115,8 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         secure=secure,
         samesite=samesite,
         path="/",
-        max_age=7 * 24 * 60 * 60
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        domain=settings.COOKIE_DOMAIN if secure else None,
     )
 
 
@@ -97,8 +126,22 @@ def clear_auth_cookies(response: Response) -> None:
     response.delete_cookie("refresh_token", path="/", samesite="strict")
 
 
+# def set_csrf_cookie(response: Response, csrf_token: str) -> None:
+#     """Set CSRF token cookie"""
+#     secure = settings.ENV != "development"
+#     samesite = "none" if secure else "lax"
+    
+#     response.set_cookie(
+#         "csrf_token",
+#         csrf_token,
+#         httponly=False,
+#         secure=secure,
+#         samesite=samesite,
+#         path="/",
+#         max_age=3600
+#     )
+
 def set_csrf_cookie(response: Response, csrf_token: str) -> None:
-    """Set CSRF token cookie"""
     secure = settings.ENV != "development"
     samesite = "none" if secure else "lax"
     
@@ -109,7 +152,8 @@ def set_csrf_cookie(response: Response, csrf_token: str) -> None:
         secure=secure,
         samesite=samesite,
         path="/",
-        max_age=3600
+        max_age=3600,
+        domain=settings.COOKIE_DOMAIN if secure else None,
     )
 
 
