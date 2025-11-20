@@ -91,30 +91,29 @@ def get_token_from_cookie(request: Request) -> Optional[str]:
 #         max_age=7 * 24 * 60 * 60
 #     )
 
-
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    secure = True  # Always True in production (you are on HTTPS)
-    samesite = "none"  # REQUIRED for cross-site cookies
+    secure = True
+    samesite = "none"                    # ← critical for cross-site
 
     response.set_cookie(
-        "access_token",
-        access_token,
+        key="access_token",
+        value=access_token,
         httponly=True,
         secure=secure,
-        samesite=samesite, 
+        samesite=samesite,
         path="/",
         max_age=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        domain=".onrender.com",
+        # domain=... ← REMOVE THIS LINE ENTIRELY
     )
     response.set_cookie(
-        "refresh_token",
-        refresh_token,
+        key="refresh_token",
+        value=refresh_token,
         httponly=True,
         secure=secure,
         samesite=samesite,
         path="/",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
-        domain=".onrender.com",
+        # domain=... ← REMOVE THIS LINE
     )
 
 def clear_auth_cookies(response: Response) -> None:
